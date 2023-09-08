@@ -1,10 +1,28 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+from typing import List
 import os
 import httpx
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:8080",
+    "http://localhost:8081",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 API_KEY = os.getenv("API_KEY")
+DEFAULT_CURRENCIES = ["EUR", "USD", "JPY", "GBP"]
 
 if (not API_KEY):
     raise EnvironmentError("API_KEY not provided") 
@@ -16,7 +34,7 @@ def build_openexchangerates_url_and_params(date: str):
     return request_url, request_params
 
 @app.get("/fetch_data/{date}")
-async def fetch_data(date: str):
+async def fetch_data(date: str, currency: List[str] = Query(DEFAULT_CURRENCIES)):
     # validate input date
     try:
         datetime.strptime(date, "%Y-%m-%d")
@@ -31,9 +49,13 @@ async def fetch_data(date: str):
 
             # check if response is valid
             if response.status_code == 200:
-                return response.json().get("rates")
+                rates = response.json().get("rates")
+                return get_rates_for_given_currencies(rates, currency)
             else:
                 return {"error": "Failed to fetch data from the external API"}
 
         except httpx.RequestError as e:
             return {"error": f"Request error: {e}"}
+
+def get_rates_for_given_currencies(rates: dict, currencies: List[str]):
+    return {currency: rates[currency] for currency in currencies if currency in rates}
