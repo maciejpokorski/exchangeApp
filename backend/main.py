@@ -2,30 +2,16 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from typing import List
-import os
+from task import setup_daily_task
+from cors import setup_cors
+from constants import DEFAULT_CURRENCIES, API_KEY
 import httpx
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:8080",
-    "http://localhost:8081",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-API_KEY = os.getenv("API_KEY")
-DEFAULT_CURRENCIES = ["EUR", "USD", "JPY", "GBP"]
-
-if (not API_KEY):
-    raise EnvironmentError("API_KEY not provided") 
+# init
+setup_cors(app)
+setup_daily_task(app)
 
 def build_openexchangerates_url_and_params(date: str):
     base_url = "https://openexchangerates.org/api/historical/"
@@ -37,7 +23,8 @@ def build_openexchangerates_url_and_params(date: str):
 async def fetch_data(date: str, currency: List[str] = Query(DEFAULT_CURRENCIES)):
     # validate input date
     try:
-        datetime.strptime(date, "%Y-%m-%d")
+        if datetime.strptime(date, "%Y-%m-%d") >= datetime.now():
+            return {"error": "Date parameter must be in the past"}
     except ValueError:
         return {"error": "Date parameter must be valid and in YYYY-MM-DD format"}
 
