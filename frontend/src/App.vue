@@ -6,7 +6,7 @@
       <div class="row">
         <div class="col d-flex align-items-center">
           <div>
-            <Datepicker v-model="date" @update:model-value="fetchData" :enable-time-picker="false" :max-date="new Date()"/>
+            <Datepicker v-model="date" :clearable="false" @update:model-value="fetchData" :enable-time-picker="false" :max-date="new Date()"/>
           </div>
           <div>
             <ExchangeRatesInline :exchangeRate="exchangeRate" :isLoading="isLoading"></ExchangeRatesInline>
