@@ -1,16 +1,19 @@
 <template>
   <div class="container mt-5">
       <div class="row pb-5">
-        <div class="col"><button type="button" class="btn btn-primary" @click="fetchData">Reload data</button></div>
+        <div class="col"><button type="button" class="btn btn-primary" :disabled="isLoading" @click="reloadTable()">Reload data</button></div>
       </div>
       <div class="row">
         <div class="col d-flex align-items-center">
           <div>
-            <Datepicker v-model="date" :enable-time-picker="false" :max-date="new Date()"/>
+            <Datepicker v-model="date" @update:model-value="fetchData" :enable-time-picker="false" :max-date="new Date()"/>
           </div>
           <div>
-            <ExchangeRatesInline :exchangeRates="exchangeRates" :isLoading="isLoading"></ExchangeRatesInline>
+            <ExchangeRatesInline :exchangeRate="exchangeRate" :isLoading="isLoading"></ExchangeRatesInline>
           </div>
+        </div>
+        <div>
+          <ExchangeRatesTable :exchangeRates="exchangeRates" :isLoading="isLoading"></ExchangeRatesTable>
         </div>
       </div>
   </div>
@@ -19,6 +22,7 @@
 <script>
 import { toValue } from 'vue';
 import ExchangeRatesInline from './components/ExchangeRatesInline.vue'
+import ExchangeRatesTable from './components/ExchangeRatesTable.vue'
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 
@@ -26,12 +30,14 @@ export default {
   name: 'App',
   components: {
     ExchangeRatesInline,
+    ExchangeRatesTable,
     Datepicker
   },
   data() {
     return {
         date: null,
-        exchangeRates: null,
+        exchangeRate: null,
+        exchangeRates: [],
         isLoading: true,
     };
   },
@@ -46,9 +52,16 @@ export default {
 
       fetch(toValue(url))
         .then((res) => res.json())
-        .then((json) => (this.exchangeRates = json))
+        .then((json) => (this.exchangeRate = json))
         .catch((err) => (console.error("Error fetching data: " + err)))
         .finally(() => (this.isLoading = false));
+    },
+    reloadTable() {
+      const date = {Date: this.date.toISOString().slice(0, 10)}
+      let rate = Object.assign(date, this.exchangeRate);
+      if (!this.exchangeRates.find(element => element.Date === rate.Date)) {
+        this.exchangeRates.push(rate)
+      }
     }
   },
 }

@@ -5,7 +5,7 @@
               <span class="list-item pe-3">Loading...</span>
           </div>
           <div v-else class="d-inline-flex">
-              <template v-for="(rate, currency) in exchangeRates" :key="currency">
+              <template v-for="(rate, currency) in exchangeRate" :key="currency">
                   <span class="list-item pe-3">{{ currency }}: {{ rate }}</span>
               </template>
           </div>
@@ -16,7 +16,7 @@
   <script>
   export default {
     props: {
-      exchangeRates: Object,
+      exchangeRate: Object,
       isLoading: Boolean,
     },
   };
