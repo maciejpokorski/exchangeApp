@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+
+  backend:
+    build: ./backend
+    ports:
+      - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+
+  frontend:
+    build: ./frontend
+    ports:
+      - 8080:8080
+
+  db:
+    image: mysql:latest
+    container_name: mysql-container
+    env_file:
+      - ./backend/.env
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: "curl --fail http://localhost:3306 || exit 1"
