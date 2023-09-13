@@ -1,48 +1,56 @@
-from fastapi import FastAPI, Query
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 from datetime import datetime
 from typing import List
 from task import setup_daily_task
 from cors import setup_cors
-from constants import DEFAULT_CURRENCIES, API_KEY
-import httpx
+from database.config import setup_db
+from db_service import DBService
+from utils import fetch_remote_data
 
 app = FastAPI()
 
 # init
 setup_cors(app)
+db_service = DBService()
 setup_daily_task(app)
 
-def build_openexchangerates_url_and_params(date: str):
-    base_url = "https://openexchangerates.org/api/historical/"
-    request_url = f"{base_url}{date}.json"
-    request_params = {"app_id": API_KEY}
-    return request_url, request_params
-
-@app.get("/fetch_data/{date}")
-async def fetch_data(date: str, currency: List[str] = Query(DEFAULT_CURRENCIES)):
+@app.get("/fetch_remote_data/{date}")
+async def fetch_data(date: str):
     # validate input date
     try:
         if datetime.strptime(date, "%Y-%m-%d") >= datetime.now():
             return {"error": "Date parameter must be in the past"}
     except ValueError:
         return {"error": "Date parameter must be valid and in YYYY-MM-DD format"}
+    
+    try:
+        enabled_currencies = [c.code for c in db_service.get_enabled_currencies()]
+        data = await fetch_remote_data(date)
+        return get_rates_for_given_currencies(data, enabled_currencies)
+    except Exception as e:
+        return {"error": f"Request error: {e}"}
 
-    request_url, request_params = build_openexchangerates_url_and_params(date)
+@app.get("/fetch_local_data/")
+async def fetch_local_data():
+    enabled_currencies = [c.code for c in db_service.get_enabled_currencies()]
+    data = db_service.get_exchange_rates()
+    result = []
+    for item in data:
+        exchange_rate = {
+            "Date": item.date,
+        }
+        exchange_rate.update(get_rates_for_given_currencies(item.rates, enabled_currencies))
+        result.append(exchange_rate)
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(request_url, params=request_params)
-
-            # check if response is valid
-            if response.status_code == 200:
-                rates = response.json().get("rates")
-                return get_rates_for_given_currencies(rates, currency)
-            else:
-                return {"error": "Failed to fetch data from the external API"}
-
-        except httpx.RequestError as e:
-            return {"error": f"Request error: {e}"}
+    return result
 
 def get_rates_for_given_currencies(rates: dict, currencies: List[str]):
     return {currency: rates[currency] for currency in currencies if currency in rates}
+
+@app.get("/get_currencies")
+def get_currencies():
+    return db_service.get_currencies()
+
+@app.patch("/update_currency/{currency_id}")
+def update_currency(currency_id: int, enabled: bool):
+    return db_service.update_currency(currency_id, enabled)
