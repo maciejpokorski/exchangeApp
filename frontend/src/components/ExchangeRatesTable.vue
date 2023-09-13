@@ -1,9 +1,9 @@
 <template>
-    <div>
+    <div class="table-responsive">
       <div v-if="isLoading" class="d-inline-flex">
           <span class="list-item pe-3 my-4">Loading...</span>
       </div>
-      <table v-else class="table table-striped mt-4">
+      <table v-else class="table table-responsive table-striped mt-4">
           <thead>
           <tr>
             <th v-for="(value, key) in exchangeRates[0]" :key="value">{{ key }}</th>

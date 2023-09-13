@@ -8,7 +8,7 @@
           <div>
             <Datepicker v-model="date" :clearable="false" @update:model-value="fetchData" :enable-time-picker="false" :max-date="new Date()"/>
           </div>
-          <div>
+          <div class="flex-fill">
             <ExchangeRatesInline :exchangeRate="exchangeRate" :isLoading="isLoading"></ExchangeRatesInline>
           </div>
         </div>
@@ -17,7 +17,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-12 col-sm-10">
+        <div class="col-md-12">
           <CurrencyList @update-currency="updateCurrencyStatus"></CurrencyList>
         </div>
       </div>
