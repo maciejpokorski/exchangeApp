@@ -11,13 +11,14 @@ from database.service import (
     update_currency,
     get_exchange_rates,
 )
-from database.config import get_session
+from database.config import get_session, create_db_and_tables
 
 app = FastAPI()
 setup_cors(app)
 
 @app.on_event("startup")
 def init():
+    create_db_and_tables()
     setup_daily_task(app)
 
 
