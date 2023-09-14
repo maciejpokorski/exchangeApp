@@ -14,7 +14,7 @@ Before you begin, ensure that you have the following tools installed:
 1. Clone this repository to your local machine:
 
    ```bash
-   git clone https://github.com/your-repo/exchange-rate-app.git
+   git clone https://github.com/maciejpokorski/exchangeApp.git
    cd exchange-rate-app
    ```
 
