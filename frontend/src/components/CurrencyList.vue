@@ -1,4 +1,5 @@
 <template>
+  <!-- Currency Configuration Accordion -->
   <div class="accordion" id="accordionExample">
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingOne">
@@ -9,6 +10,7 @@
       <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
         <div class="accordion-body">
           <h1>Currency List</h1>
+          <!-- Currency Search Input -->
           <input
             v-model="search"
             class="form-control mb-3"
@@ -16,56 +18,71 @@
           />
           <div class="container">
             <div class="d-flex flex-row row">
-                <CurrencyItem
-                  v-for="currency in filteredCurrencies"
-                  :key="currency.id"
-                  :currency="currency"
-                  @toggle-status="updateCurrencyStatus"
-                />
+              <!-- CurrencyItem Component for Each Currency -->
+              <CurrencyItem
+                v-for="currency in filteredCurrencies"
+                :key="currency.id"
+                :currency="currency"
+                @toggle-status="updateCurrencyStatus"
+              />
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  </template>
-  
-  <script>
-  import CurrencyItem from "./CurrencyItem.vue";
-  
-  export default {
-    components: {
-      CurrencyItem,
+</template>
+
+<script>
+import CurrencyItem from "./CurrencyItem.vue";
+import { fetchCurrencies } from "../api.js";
+
+export default {
+  components: {
+    CurrencyItem,
+  },
+  data() {
+    return {
+      currencies: [],
+      search: '',
+    };
+  },
+  mounted() {
+    this.fetchData();
+  },
+  computed: {
+    /**
+     * Filtered list of currencies based on search input.
+     * @returns {Array} Filtered list of currencies.
+     */
+    filteredCurrencies() {
+      return this.currencies.filter(currency => {
+        return currency.code.toLowerCase().includes(this.search.toLowerCase())
+      })
+    }
+  },
+  methods: {
+    /**
+     * Fetches the list of currencies from the API.
+     * @returns {Promise} A promise that resolves to the list of currencies.
+     */
+    async fetchData() {
+      return fetchCurrencies().then((currencies) => {
+        this.currencies = currencies;
+      });
     },
-    data() {
-      return {
-        currencies: [],
-        search: '',
-      };
-    },
-    mounted() {
-      this.fetchData();
-    },
-    computed: {
-      filteredCurrencies() {
-        return this.currencies.filter(currency => {
-          return currency.code.toLowerCase().includes(this.search.toLowerCase())
-        })
+    /**
+     * Updates the status of a currency and emits an event.
+     * @param {Object} updatedCurrency - The updated currency object.
+     */
+    updateCurrencyStatus(updatedCurrency) {
+      // Find the index of the updated currency in the array
+      const index = this.currencies.findIndex(currency => currency.id === updatedCurrency.id);
+      if (index !== -1) {
+        this.currencies[index].enabled = updatedCurrency.enabled;
+        this.$emit('update-currency', updatedCurrency)
       }
     },
-    methods: {
-        fetchData() {
-            const url = "http://localhost:8000/get_currencies/";
-            fetch(url).then((res) => res.json()).then((json) => (this.currencies = json)).catch((err) => (console.error("Error fetching data: " + err)))
-        },
-        updateCurrencyStatus(updatedCurrency) {
-            // Find the index of the updated currency in the array
-            const index = this.currencies.findIndex(currency => currency.id === updatedCurrency.id);
-            if (index !== -1) {
-                this.currencies[index].enabled = updatedCurrency.enabled;
-                this.$emit('update-currency', updatedCurrency)
-            }
-      },
-    },
-  };
-  </script>
+  },
+};
+</script>

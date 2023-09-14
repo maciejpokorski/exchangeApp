@@ -1,36 +1,65 @@
 <template>
+  <!-- Main App Component -->
   <div class="container mt-5">
-      <div class="row pb-5">
-        <div class="col"><button type="button" class="btn btn-primary" :disabled="isLoading" @click="reloadTable()">Reload data</button></div>
+    <!-- Header Row -->
+    <div class="row pb-5">
+      <div class="col">
+        <!-- Reload Button -->
+        <button
+          type="button"
+          class="btn btn-primary"
+          :disabled="isLoading"
+          @click="reloadTable()"
+        >
+          Reload data
+        </button>
       </div>
-      <div class="row">
-        <div class="col d-md-flex align-items-center">
-          <div>
-            <Datepicker v-model="date" :clearable="false" @update:model-value="fetchData" :enable-time-picker="false" :max-date="new Date()"/>
-          </div>
-          <div class="flex-fill">
-            <ExchangeRatesInline :exchangeRate="exchangeRate" :isLoading="isLoading"></ExchangeRatesInline>
-          </div>
-        </div>
+    </div>
+    <!-- Datepicker and Exchange Rate Display -->
+    <div class="row">
+      <div class="col d-md-flex align-items-center">
+        <!-- Datepicker Component -->
         <div>
-          <ExchangeRatesTable :exchangeRates="exchangeRates" :isLoading="isLoading"></ExchangeRatesTable>
+          <Datepicker
+            v-model="date"
+            :clearable="false"
+            @update:model-value="fetchData"
+            :enable-time-picker="false"
+            :max-date="new Date()"
+          />
+        </div>
+        <div class="flex-fill">
+          <!-- ExchangeRatesInline Component -->
+          <ExchangeRatesInline
+            :exchangeRate="exchangeRate"
+            :isLoading="isLoading"
+          ></ExchangeRatesInline>
         </div>
       </div>
-      <div class="row">
-        <div class="col-md-12">
-          <CurrencyList @update-currency="updateCurrencyStatus"></CurrencyList>
-        </div>
+      <!-- ExchangeRatesTable Component -->
+      <div>
+        <ExchangeRatesTable
+          :exchangeRates="exchangeRates"
+          :isLoading="isLoading"
+        ></ExchangeRatesTable>
       </div>
+    </div>
+    <!-- Currency List Component -->
+    <div class="row">
+      <div class="col-md-12">
+        <CurrencyList @update-currency="updateCurrencyStatus"></CurrencyList>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { toValue } from 'vue';
-import ExchangeRatesInline from './components/ExchangeRatesInline.vue'
-import ExchangeRatesTable from './components/ExchangeRatesTable.vue'
-import CurrencyList from './components/CurrencyList.vue'
+import ExchangeRatesInline from './components/ExchangeRatesInline.vue';
+import ExchangeRatesTable from './components/ExchangeRatesTable.vue';
+import CurrencyList from './components/CurrencyList.vue';
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import { fetchRemoteData, fetchLocalData, updateCurrencyStatus } from './api.js'
 
 export default {
   name: 'App',
@@ -38,55 +67,50 @@ export default {
     ExchangeRatesInline,
     ExchangeRatesTable,
     CurrencyList,
-    Datepicker
+    Datepicker,
   },
   data() {
     return {
-        date: null,
-        exchangeRate: null,
-        exchangeRates: [],
-        isLoading: true,
+      // Selected date for exchange rate data
+      date: null,
+      // Current exchange rate
+      exchangeRate: null,
+      // List of exchange rates
+      exchangeRates: [],
+      // Loading indicator
+      isLoading: true,
     };
   },
-  mounted() {
-    this.date = new Date()
-    this.fetchData()
+  async mounted() {
+    // Initialize date with the current date
+    this.date = new Date();
+    // Fetch exchange rate data on component mount
+    await this.fetchData();
   },
   methods: {
+    /**
+     * Fetch exchange rate data for the selected date.
+     */
     async fetchData() {
       this.isLoading = true;
-      const url = toValue("http://localhost:8000/fetch_remote_data/" + this.date.toISOString().slice(0, 10))
-
-      return fetch(toValue(url))
-        .then((res) => res.json())
-        .then((json) => (this.exchangeRate = json))
-        .catch((err) => (console.error("Error fetching data: " + err)))
-        .finally(() => (this.isLoading = false));
+      this.exchangeRate = await fetchRemoteData(this.date);
+      this.isLoading = false;
     },
-    reloadTable() {
-      this.fetchData()
-      this.exchangeRates = []
-      const url = "http://localhost:8000/fetch_local_data/"
-      fetch(url).then((res) => res.json()).then((json) => (this.exchangeRates = json)).catch((err) => (console.error("Error fetching data: " + err)))
+    /**
+     * Reload the exchange rate table data.
+     */
+    async reloadTable() {
+      this.fetchData();
+      this.exchangeRates = [];
+      this.exchangeRates = await fetchLocalData();
     },
-    updateCurrencyStatus(currency) {
-      currency.enabled = !currency.enabled;
-      // Send a PATCH request to update the enabled status using fetch
-      fetch(`http://localhost:8000/update_currency/${currency.id}?enabled=${currency.enabled}`, {
-        method: 'PATCH',
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .catch(error => {
-          console.error('Error updating currency:', error);
-          // Rollback the status change if there's an error
-          currency.enabled = !currency.enabled;
-        });
+    /**
+     * Update the status of a currency.
+     * @param {Object} currency - The currency object to update.
+     */
+    async updateCurrencyStatus(currency) {
+      await updateCurrencyStatus(currency);
     },
   },
-}
+};
 </script>
