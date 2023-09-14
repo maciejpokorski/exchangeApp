@@ -40,7 +40,6 @@ async def fetch_data(date: str, session: Session = Depends(get_session)):
             return {"error": "Date parameter must be in the past"}
     except ValueError:
         return {"error": "Date parameter must be valid and in YYYY-MM-DD format"}
-
     try:
         enabled_currencies = [c.code for c in get_enabled_currencies(session)]
         data = await fetch_remote_data(date)
@@ -61,6 +60,7 @@ async def fetch_local_data(session: Session = Depends(get_session)):
         List[dict]: A list of dictionaries containing exchange rates for enabled currencies.
     """
     enabled_currencies = [c.code for c in get_enabled_currencies(session)]
+    #if woulb be a lot of data, we should paginate the results
     data = get_exchange_rates(session)
     result = []
     for item in data:

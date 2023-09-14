@@ -1,4 +1,4 @@
-from sqlmodel import Session, desc, update, select
+from sqlmodel import Session, desc, select
 from database.models.currency import Currency
 from database.models.exchange_rate import ExchangeRate
 
