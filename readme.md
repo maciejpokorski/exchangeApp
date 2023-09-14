@@ -1,5 +1,7 @@
 # Exchange Rate App with Docker Compose
 
+![Screen Recording 2023-09-14 at 18 55 24](https://github.com/maciejpokorski/exchangeApp/assets/9077410/72b7405e-7ac2-44a4-b45e-4c342bea0f86)
+
 This is a Docker Compose configuration for an Exchange Rate App. It includes services for the backend, frontend, and a MySQL database. Use this setup to quickly run the app in a containerized environment.
 
 ## Prerequisites
