@@ -1,6 +1,6 @@
 <template>
   <!-- Currency Configuration Accordion -->
-  <div class="accordion" id="accordionExample">
+  <div v-if="currencies && currencies.length > 0" class="accordion" id="accordionExample">
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingOne">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
@@ -56,6 +56,9 @@ export default {
      * @returns {Array} Filtered list of currencies.
      */
     filteredCurrencies() {
+      if (!this.currencies) {
+        return [];
+      }
       return this.currencies.filter(currency => {
         return currency.code.toLowerCase().includes(this.search.toLowerCase())
       })
