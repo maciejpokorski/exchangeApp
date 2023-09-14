@@ -2,8 +2,17 @@ from sqlmodel import SQLModel, Field
 from sqlalchemy import JSON, Column, event
 from typing import Dict
 from datetime import date
+from sqlalchemy.ext.declarative import declarative_base
 
 class ExchangeRate(SQLModel, table=True):
+    """
+    Represents exchange rates for a specific date.
+
+    Attributes:
+        id (int): The unique identifier for the exchange rate.
+        date (date): The date for which the exchange rates are recorded.
+        rates (Dict): A dictionary of currency codes and their respective exchange rates.
+    """
     id: int = Field(primary_key=True, index=True)
     date: date
     rates: Dict = Field(default={}, sa_column=Column(JSON))
@@ -180,7 +189,7 @@ INITIAL_DATA = [
         "ZMW": 5.352488,
         "ZWL": 322.355006
         },
-        'date': '2023-09-12', 
+        'date': date(2023,9,12), 
    },
    {
        'rates': 
@@ -351,7 +360,7 @@ INITIAL_DATA = [
         "ZMW": 5.342413,
         "ZWL": 322.355006
        },
-       'date': '2023-09-11'
+       'date': date(2023, 9, 11)
    },
    {
        'rates': {
@@ -521,7 +530,7 @@ INITIAL_DATA = [
             "ZMW": 5.350202,
             "ZWL": 322.355006
        },
-       'date': '2023-09-10'
+       'date': date(2023, 9, 10)
    }
 ]
 

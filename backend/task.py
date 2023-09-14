@@ -1,24 +1,37 @@
 import datetime
 from fastapi_utils.tasks import repeat_every
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlmodel import Session
+from database.config import get_session
 from utils import fetch_remote_data
 from database.models.exchange_rate import ExchangeRate
-from db_service import DBService
+from database.service import save_exchange_rate
 
+async def daily_task(session: Session = Depends(get_session)):
+    """
+    Perform a daily task to fetch and save exchange rate data.
 
-async def daily_task():
+    This function is scheduled to run once a day.
+
+    Raises:
+        Exception: If an error occurs during the task.
+    """
     try:
         today = datetime.date.today().strftime("%Y-%m-%d")
         data = await fetch_remote_data(today)
         exchange_rate = ExchangeRate(date=today, rates=data)
-        DBService().save_exchange_rate(exchange_rate)
+        save_exchange_rate(session, exchange_rate)
         print(f"Daily task completed at {datetime.datetime.now()}")
     except Exception as e:
         print(e)
 
-
 def setup_daily_task(app: FastAPI):
-    # @app.on_event("startup")
+    """
+    Set up a daily task to run the `daily_task` function.
+
+    Args:
+        app (FastAPI): The FastAPI application to add the task to.
+    """
     @repeat_every(seconds=60 * 60 * 24)  # Repeat every 24 hours (1 day)
     async def start_daily_task():
         await daily_task()

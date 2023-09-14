@@ -2,6 +2,14 @@ from sqlmodel import SQLModel, Field, select
 from sqlalchemy import  event
 
 class Currency(SQLModel, table=True):
+    """
+    Represents a currency.
+
+    Attributes:
+        id (int): The unique identifier for the currency.
+        code (str): The currency code, which is uniqe.
+        enabled (bool): Indicates whether the currency is enabled (default is False).
+    """
     id: int = Field(primary_key=True, index=True)
     code: str = Field(unique=True, index=True)
     enabled: bool = False
